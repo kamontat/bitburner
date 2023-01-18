@@ -1,0 +1,12 @@
+const SERVER_PREFIX = "serv"
+
+const SERVER_DATA = "_data"
+const SERVER_DATA_ENABLED = "enabled"
+const SERVER_DATA_HOSTNAME = "hostname"
+
+export {
+	SERVER_PREFIX,
+	SERVER_DATA,
+	SERVER_DATA_ENABLED,
+	SERVER_DATA_HOSTNAME,
+}
