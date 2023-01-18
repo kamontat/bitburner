@@ -1,3 +1,5 @@
-import { defineConfig } from "@kcbb-libs/vite-config";
+import { defineConfig, ConfigType } from "@kcbb-libs/vite-config";
 
-export default defineConfig("app", __dirname);
+export default defineConfig(ConfigType.APP, {
+  dirname: __dirname,
+});
