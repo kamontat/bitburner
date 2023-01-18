@@ -1,0 +1,20 @@
+{
+  "name": "@kcbb/init",
+  "displayName": "init",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@kcbb-libs/vite-config": "workspace:*",
+    "@types/netscripts": "workspace:*",
+    "@types/node": "18.11.18",
+    "@types/packages": "workspace:*",
+    "typescript": "4.9.4",
+    "vite": "4.0.4",
+    "vitest": "0.27.2"
+  }
+}

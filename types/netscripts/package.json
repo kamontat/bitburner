@@ -1,0 +1,5 @@
+{
+  "name": "@types/netscripts",
+  "version": "0.1.0",
+  "types": "./netscripts-v2.d.ts"
+}

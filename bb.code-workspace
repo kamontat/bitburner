@@ -1,0 +1,44 @@
+{
+  "folders": [
+    {
+      "name": "@kcbb/init",
+      "path": "./apps/init"
+    },
+    {
+      "name": "@kcbb/hack",
+      "path": "./apps/hack"
+    },
+    {
+      "name": "@kcbb/purchase-server",
+      "path": "./apps/purchase-server"
+    },
+    {
+      "name": "@kcbb/deploy",
+      "path": "./apps/deploy"
+    },
+    {
+      "name": "@kcbb-libs/commandline",
+      "path": "./packages/commandline"
+    },
+    {
+      "name": "@kcbb-libs/logger",
+      "path": "./packages/logger"
+    },
+    {
+      "name": "@kcbb-libs/vite-config",
+      "path": "./packages/vite-config"
+    },
+    {
+      "name": "@types/netscripts",
+      "path": "./types/netscripts"
+    },
+    {
+      "name": "@types/packages",
+      "path": "./types/packages"
+    },
+    {
+      "name": "root",
+      "path": "."
+    }
+  ]
+}

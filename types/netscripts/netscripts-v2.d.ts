@@ -1,5 +1,6 @@
 /**
- * https://raw.githubusercontent.com/danielyxie/bitburner/be42689697164bf99071c0bcf34baeef3d9b3ee8/src/ScriptEditor/NetscriptDefinitions.d.ts
+ * 1. Copied https://raw.githubusercontent.com/danielyxie/bitburner/be42689697164bf99071c0bcf34baeef3d9b3ee8/src/ScriptEditor/NetscriptDefinitions.d.ts
+ * 2. Remove declare from file except first one
  */
 
 export {};
@@ -277,13 +278,13 @@ declare global {
   }
 
   /** @public */
-  declare enum PositionTypes {
+  enum PositionTypes {
     Long = "L",
     Short = "S",
   }
 
   /** @public */
-  declare enum OrderTypes {
+  enum OrderTypes {
     LimitBuy = "Limit Buy Order",
     LimitSell = "Limit Sell Order",
     StopBuy = "Stop Buy Order",
@@ -6864,7 +6865,7 @@ declare global {
 
   // BASE ENUMS
   /** @public */
-  declare enum ToastVariant {
+  enum ToastVariant {
     SUCCESS = "success",
     WARNING = "warning",
     ERROR = "error",
@@ -6872,7 +6873,7 @@ declare global {
   }
 
   /** @public */
-  declare enum CrimeType {
+  enum CrimeType {
     shoplift = "Shoplift",
     robStore = "Rob Store",
     mug = "Mug",
@@ -6888,14 +6889,14 @@ declare global {
   }
 
   /** @public */
-  declare enum FactionWorkType {
+  enum FactionWorkType {
     hacking = "hacking",
     field = "field",
     security = "security",
   }
 
   /** @public */
-  declare enum UniversityClassType {
+  enum UniversityClassType {
     computerScience = "Computer Science",
     dataStructures = "Data Structures",
     networks = "Networks",
@@ -6905,7 +6906,7 @@ declare global {
   }
 
   /** @public */
-  declare enum GymType {
+  enum GymType {
     strength = "str",
     defense = "def",
     dexterity = "dex",
@@ -6913,7 +6914,7 @@ declare global {
   }
 
   /** @public */
-  declare enum JobName {
+  enum JobName {
     software0 = "Software Engineering Intern",
     software1 = "Junior Software Engineer",
     software2 = "Senior Software Engineer",
@@ -6984,7 +6985,7 @@ declare global {
 
   /** Names of all cities
    * @public */
-  declare enum CityName {
+  enum CityName {
     Aevum = "Aevum",
     Chongqing = "Chongqing",
     Sector12 = "Sector-12",
@@ -6995,7 +6996,7 @@ declare global {
 
   /** Names of all locations
    * @public */
-  declare enum LocationName {
+   enum LocationName {
     AevumAeroCorp = "AeroCorp",
     AevumBachmanAndAssociates = "Bachman & Associates",
     AevumClarkeIncorporated = "Clarke Incorporated",
