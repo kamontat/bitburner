@@ -12,7 +12,6 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
   const pkgname = options?.pkgname ?? "package.json";
   const indexname = options?.indexname ?? "index.ts";
   const sourcemap = options?.sourcemap ?? "inline";
-  const globals = options?.globals ?? undefined;
   const srcdir = options?.srcdir ?? "src";
   const distdir = options?.distdir ?? "dist";
 
@@ -26,6 +25,7 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
   const entry = resolve(dirname, srcdir, indexname);
   const dir = type === ConfigType.APP ? `../../${distdir}` : distdir;
 
+  let externalsConfig = undefined;
   let typescriptConfig = undefined;
   if (type !== ConfigType.APP) {
     typescriptConfig = {
@@ -35,9 +35,21 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
     };
   }
 
+  if (type === ConfigType.LIB) {
+    externalsConfig = {
+      builtins: true,
+      deps: true,
+      devDeps: true,
+      optDeps: true,
+      peerDeps: true,
+      packagePath: [resolve(dirname, "package.json")],
+    };
+  }
+
   return {
     build: {
       sourcemap,
+      minify: false,
       lib: {
         formats: ["es"],
         entry,
@@ -48,10 +60,8 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
         input: entry,
         output: {
           dir,
-          globals,
         },
-        external: globals && Object.keys(globals),
-        plugins: [externals(), typescript(typescriptConfig)],
+        plugins: [externals(externalsConfig), typescript(typescriptConfig)],
       },
     },
     define: {

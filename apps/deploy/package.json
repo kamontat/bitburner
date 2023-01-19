@@ -8,6 +8,11 @@
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
+  "dependencies": {
+    "@kcbb-libs/cache": "workspace:*",
+    "@kcbb-libs/commandline": "workspace:*",
+    "@kcbb-libs/logger": "workspace:*"
+  },
   "devDependencies": {
     "@kcbb-libs/vite-config": "workspace:*",
     "@rollup/plugin-typescript": "11.0.0",

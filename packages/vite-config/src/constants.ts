@@ -1,21 +1,19 @@
 export enum ConfigType {
   APP = "app",
-  LIB = "lib"
+  LIB = "lib",
 }
 
 export interface ConfigOptions {
   /** base directory name (default = __dirname) */
-  dirname: string
+  dirname: string;
   /** package json file name (default = package.json) */
-  pkgname?: string
+  pkgname?: string;
   /** entry file (default = index.ts) */
-  indexname?: string
+  indexname?: string;
   /** source code directory */
-  srcdir?: string
+  srcdir?: string;
   /** destination directory */
-  distdir?: string
+  distdir?: string;
   /** source map (default = inline) */
-  sourcemap?: false | "inline"
-  /** externals packages */
-  globals?: Record<string, string>
+  sourcemap?: false | "inline";
 }

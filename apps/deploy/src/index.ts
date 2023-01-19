@@ -1,7 +1,5 @@
-const a = (ns: NS) => {
-  ns.printf("hello world")
-}
+import { Context } from "@kcbb-libs/commandline";
 
-console.log(__NAME__)
+console.log(Context.get());
 
-export {a};
+export {};

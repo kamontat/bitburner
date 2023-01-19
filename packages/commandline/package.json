@@ -2,10 +2,16 @@
   "name": "@kcbb-libs/commandline",
   "version": "0.1.0",
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "vite build",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@kcbb-libs/cache": "workspace:*",
+    "@kcbb-libs/logger": "workspace:*"
   },
   "devDependencies": {
     "@kcbb-libs/vite-config": "workspace:*",

@@ -21,8 +21,16 @@
       "path": "./packages/commandline"
     },
     {
+      "name": "@kcbb-libs/graph",
+      "path": "./packages/graph"
+    },
+    {
       "name": "@kcbb-libs/logger",
       "path": "./packages/logger"
+    },
+    {
+      "name": "@kcbb-libs/cache",
+      "path": "./packages/cache"
     },
     {
       "name": "@kcbb-libs/vite-config",
@@ -40,5 +48,8 @@
       "name": "root",
       "path": "."
     }
-  ]
+  ],
+  "settings": {
+    "testing.automaticallyOpenPeekView": "never"
+  }
 }

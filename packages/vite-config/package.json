@@ -5,7 +5,6 @@
   "main": "dist/index.js",
   "types": "dist/index.d.js",
   "scripts": {
-    "vite": "vite",
     "build": "vite build",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
