@@ -62,6 +62,7 @@ importers:
 
   apps/init:
     specifiers:
+      '@kcbb-libs/commandline': workspace:*
       '@kcbb-libs/vite-config': workspace:*
       '@rollup/plugin-typescript': 11.0.0
       '@types/netscripts': workspace:*
@@ -72,6 +73,8 @@ importers:
       typescript: 4.9.4
       vite: 4.0.4
       vitest: 0.27.2
+    dependencies:
+      '@kcbb-libs/commandline': link:../../packages/commandline
     devDependencies:
       '@kcbb-libs/vite-config': link:../../packages/vite-config
       '@rollup/plugin-typescript': 11.0.0_mhocex6fqwakw35tk2klboonyu
@@ -135,6 +138,7 @@ importers:
   packages/commandline:
     specifiers:
       '@kcbb-libs/cache': workspace:*
+      '@kcbb-libs/graph': workspace:*
       '@kcbb-libs/logger': workspace:*
       '@kcbb-libs/vite-config': workspace:*
       '@rollup/plugin-typescript': 11.0.0
@@ -148,6 +152,7 @@ importers:
       vitest: 0.27.2
     dependencies:
       '@kcbb-libs/cache': link:../cache
+      '@kcbb-libs/graph': link:../graph
       '@kcbb-libs/logger': link:../logger
     devDependencies:
       '@kcbb-libs/vite-config': link:../vite-config

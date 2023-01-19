@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@kcbb-libs/cache": "workspace:*",
+    "@kcbb-libs/graph": "workspace:*",
     "@kcbb-libs/logger": "workspace:*"
   },
   "devDependencies": {

@@ -6,6 +6,8 @@
 export {};
 
 declare global {
+  type MainFunction = (ns: NS) => Promise<void>;
+
   /* TODO: remove ns1-specific documentation for all functions, and just create a basic doc somewhere that says how to
    *       convert examples for use in .script files (e.g. no async/await, var instead of let/const, etc). */
 
@@ -6996,7 +6998,7 @@ declare global {
 
   /** Names of all locations
    * @public */
-   enum LocationName {
+  enum LocationName {
     AevumAeroCorp = "AeroCorp",
     AevumBachmanAndAssociates = "Bachman & Associates",
     AevumClarkeIncorporated = "Clarke Incorporated",

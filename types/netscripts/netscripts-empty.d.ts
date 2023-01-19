@@ -6,5 +6,7 @@
 export {};
 
 declare global {
+  type MainFunction = (ns: NS) => Promise<void>;
+
   // COPY NetscriptDefinitions.d.ts here
 }

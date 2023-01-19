@@ -1,5 +1,6 @@
 import { Logger } from "@kcbb-libs/logger";
 import { Cache } from "@kcbb-libs/cache";
+import { Graph } from "@kcbb-libs/graph";
 
 export class Context {
   private static _instance: Context;
@@ -16,9 +17,19 @@ export class Context {
 
   readonly logger: Logger;
   readonly cache: Cache;
+  readonly graph: Graph;
 
-  constructor(readonly ns: NS) {
+  private constructor(readonly ns: NS) {
     this.logger = Logger.init(ns);
     this.cache = Cache.get();
+    this.graph = Graph.init({
+      startPoint: "home",
+      resolver: host => ns.scan(host),
+      static: ns.getPurchasedServers(),
+    });
+  }
+
+  exit() {
+    this.ns.exit();
   }
 }

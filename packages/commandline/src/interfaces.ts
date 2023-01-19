@@ -23,6 +23,14 @@ export type Converter<T> = ValueCallback<string, T>;
 export interface OptionData<N extends string, T> {
   name: N;
   options: string[];
+  /** convert raw data from input to certain data type */
   convert: Converter<T>;
-  default?: EmptyCallback<string>;
+  /** define default value if no user input */
+  default?: EmptyCallback<T>;
+  /** verify option value */
+  verify?: ValueCallback<T, Error | undefined>;
+  /** perform action on option value */
+  exec?: ValueCallback<T, void>;
 }
+
+export type DefineOption<I, N extends string, T> = (input: I) => OptionData<N, T>;

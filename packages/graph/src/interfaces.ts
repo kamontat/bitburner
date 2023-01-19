@@ -1,6 +1,8 @@
 export type GraphResolver<T> = (name: T) => T[];
 export type List<T> = T[];
 
+export type Converter<A, B> = (a: A) => B;
+
 export interface GraphDataValue {
   enabled: boolean;
   name: string;
@@ -11,8 +13,10 @@ export interface GraphData {
 }
 
 export interface GraphTree {
-  [key: string]: GraphTree | GraphData;
+  [key: string]: GraphNode;
 }
+
+export type GraphNode = (GraphTree & GraphData) | GraphData;
 
 export interface GraphOption {
   resolver?: GraphResolver<string>;
@@ -26,3 +30,4 @@ export interface GraphModifier {
 }
 
 export type WalkCallback = (hostname: string, paths: string[]) => void;
+export type ReduceCallback<T> = (prev: T, hostname: string, paths: string[]) => T;

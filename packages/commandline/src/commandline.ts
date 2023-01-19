@@ -30,10 +30,26 @@ export class Commandline<M> {
   options<N extends string, T>(data: OptionData<N, T>): Commandline<M & Record<N, T>> {
     let raw = this.getMapper(...data.options);
 
-    if (raw === undefined && data.default) raw = data.default(this.context);
-    if (raw === undefined) throw new Error(`'${data.name}' is requires option, please add either [${data.options}]`);
+    if (raw === undefined && !data.default)
+      throw new Error(`'${data.name}' is requires option, please add either [${data.options}]`);
 
-    this._result.options[data.name] = data.convert(raw, this.context);
+    if (raw === undefined && data.default) {
+      this._result.options[data.name] = data.default(this.context);
+    } else if (raw !== undefined) {
+      this._result.options[data.name] = data.convert(raw, this.context);
+    }
+
+    if (data.verify) {
+      const result = this._result.options[data.name];
+      const error = data.verify(result as T, this.context);
+      if (error) throw error;
+    }
+
+    if (data.exec) {
+      const result = this._result.options[data.name];
+      data.exec(result as T, this.context);
+    }
+
     return this as Commandline<M & Record<N, T>>;
   }
 

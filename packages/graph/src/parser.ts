@@ -1,72 +1,63 @@
 import type {
   GraphData,
-  GraphDataValue,
   GraphModifier,
+  GraphNode,
   GraphOption,
   GraphResolver,
   GraphTree,
+  ReduceCallback,
   WalkCallback,
 } from "./interfaces";
 
-const _parseTree = (
-  resolver: GraphResolver<string>,
-  key: string,
-  traveled: Record<string, boolean> = {}
-): GraphTree | GraphData | undefined => {
-  console.log(`parse ${key}, ${JSON.stringify(traveled)}`);
-  if (traveled[key]) return;
+const _parseTree = (points: string[], resolver: GraphResolver<string>, traveled: Record<string, boolean> = {}) => {
+  const _points = points.filter(p => !traveled[p]);
 
+  // console.log(`points: ${points} => ${_points}`);
   const result: GraphTree = {};
 
-  const _connected = resolver(key);
-  const connected = _connected.filter(c => !traveled[c]);
-  console.log(`connect to ${connected}`);
-
-  traveled[key] = true;
-
-  if (connected.length === 0) {
-    console.log(`stop ${key} and return`);
-    return {
+  for (const point of _points) {
+    traveled[point] = true;
+    result[point] = {
       _data: {
         enabled: true,
-        name: key,
+        name: point,
       },
     };
   }
 
-  for (const next of connected) {
-    console.log(`resolve ${next}/${key}`);
-    const value = _parseTree(resolver, next, traveled);
-    console.log(`return ${JSON.stringify(value)} from ${next}/${key}`);
-    if (value !== undefined) {
-      result[next] = {
-        ...value,
-        _data: {
-          enabled: true,
-          name: next,
-        },
-      };
-    }
+  for (const point of _points) {
+    result[point] = {
+      ...result[point],
+      ..._parseTree(resolver(point), resolver, traveled),
+    };
   }
 
   return result;
 };
 
 const _buildTreeFromArray = (tree: GraphTree, elements: string[]): GraphTree => {
-  elements.forEach(name => (tree[name] = { _data: { enabled: true, name } }));
+  elements.forEach(name => {
+    const data = {
+      _data: {
+        enabled: true,
+        name,
+      },
+    } as GraphTree & GraphData;
+    tree[name] = data;
+  });
   return tree;
 };
 
-// LIMITATION:  Currently this function not guarantee shortest path
-//              However, it's guarantee only unique name will be return
-//              regardless of the connection level.
-// IMPROVEMENT: Loop per level instead of loop deep level.
 export const parseTree = (options: GraphOption): GraphTree => {
   const startPoint = options?.startPoint ?? "home";
 
   let tree = {};
-  if (options.resolver) tree = _parseTree(options.resolver, startPoint) ?? {};
-  if (options.static && options.static.length > 0) tree = _buildTreeFromArray(tree, options.static);
+  if (options.resolver) {
+    tree = _parseTree(options.resolver(startPoint), options.resolver, { [startPoint]: true });
+  }
+  if (options.static && options.static.length > 0) {
+    tree = _buildTreeFromArray(tree, options.static);
+  }
 
   return tree;
 };
@@ -83,24 +74,36 @@ const isWhitelist = (name: string, modifier?: GraphModifier): boolean => {
   else return true;
 };
 
-export const walk = (input: GraphTree | GraphData, cb: WalkCallback, modifier?: GraphModifier, prev: string[] = []) => {
-  // Data will be null on tree root
-  const data = input._data as GraphDataValue;
-  const isEnabled = data.enabled;
-  const name = data.name;
+const _walk = (input: GraphNode, cb: WalkCallback, modifier?: GraphModifier, prev: string[] = []) => {
+  const name = input._data.name;
 
-  // console.log(`walk ${name}`);
-
+  const isEnabled = input._data.enabled;
   const isBL = isBlacklist(name, modifier);
-  if (isBL) return;
+  if (!isEnabled || isBL) return;
 
-  if (isEnabled) {
-    const current = prev[prev.length - 1];
-    const isWL = isWhitelist(current, modifier);
-    if (isWL) cb(current, prev);
-  }
+  const current = prev[prev.length - 1];
+  const isWL = isWhitelist(current, modifier);
+  if (isWL) cb(current, prev);
 
-  const tree = input as GraphTree;
-  const connections = Object.keys(tree).filter(key => key !== "_data");
-  connections.forEach(h => walk(tree[h], cb, modifier, prev.concat(h)));
+  const raw = input as Record<string, GraphNode>;
+  Object.keys(raw)
+    .filter(key => key !== "_data")
+    .forEach(key => _walk(raw[key], cb, modifier, prev.concat(key)));
+};
+
+export const walk = (tree: GraphTree, cb: WalkCallback, modifier?: GraphModifier) => {
+  Object.keys(tree).forEach(key => {
+    const node = tree[key];
+    _walk(node, cb, modifier, [key]);
+  });
+};
+
+export const reduce = <T>(tree: GraphTree, def: T, cb: ReduceCallback<T>, modifier?: GraphModifier): T => {
+  return Object.keys(tree).reduce((prev, key) => {
+    const node = tree[key];
+    const callback: WalkCallback = (h, p) => (prev = cb(prev, h, p));
+    _walk(node, callback, modifier, [key]);
+
+    return prev;
+  }, def);
 };
