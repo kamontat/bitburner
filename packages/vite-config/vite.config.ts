@@ -28,6 +28,7 @@ export default defineConfig({
           rootDir: resolve(__dirname, "src"),
           declaration: true,
           declarationDir: resolve(__dirname, "dist"),
+          outputToFilesystem: true,
         }),
       ],
     },

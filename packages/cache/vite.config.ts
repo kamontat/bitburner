@@ -1,4 +1,4 @@
-import { defineConfig, ConfigType } from "@kcbb-libs/vite-config";
+import { defineConfig, ConfigType } from "@kcbb-internal/vite-config";
 
 export default defineConfig(ConfigType.LIB, {
   dirname: __dirname,

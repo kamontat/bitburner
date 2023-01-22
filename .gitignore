@@ -238,3 +238,5 @@ $RECYCLE.BIN/
 
 dist
 lib
+
+.rollup.cache

@@ -23,14 +23,39 @@ describe("default", () => {
 
     Commandline.init(undefined as unknown as NS)
       .default("@kcws/test", "0.0.1", "2023-01-01", [])
-      // <cmd> upgrade server --option -t arguments 1 2 3
+      .options({
+        name: "upgrade",
+        values: ["--upgrade", "-U"],
+        convert: Converts.string,
+        // optional
+        help: { description: "", default: d => d.toString() },
+        // optional
+        default: Defaults.constant("test"),
+        // optional
+        verify: () => new Error("verify failed"),
+        // optional
+        exec: (opts, ctx) => {
+          console.log(opts);
+          console.log(ctx);
+        },
+      })
+      // User must provide command,
+      // otherwise, this cli will exit with non-zero
+      .commands(requireCommand())
+      // <cmd> upgrade server argument 1 2 3
+      // args = ["argument", 1, 2, 3]
       .commands({
         name: "upgrade",
-        commands: ["upgrade", "server"],
+        values: ["upgrade", "server"],
+        // optional
+        help: { description: "" },
+        // optional
+        verify: () => new Error("verify failed"),
+        // optional
         exec: (args, ctx) => {
           console.log(args);
-          console.log(ctx)
-        }
-      })
+          console.log(ctx);
+        },
+      });
   });
 });

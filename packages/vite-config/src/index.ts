@@ -2,8 +2,8 @@ import type { UserConfigExport } from "vite";
 
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import externals from "rollup-plugin-node-externals";
-import typescript from "@rollup/plugin-typescript";
+import externals, { type ExternalsOptions } from "rollup-plugin-node-externals";
+import typescript, { type RollupTypescriptOptions } from "@rollup/plugin-typescript";
 
 import { ConfigType, ConfigOptions } from "./constants";
 
@@ -14,7 +14,6 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
   const sourcemap = options?.sourcemap ?? (type === ConfigType.APP ? false : "inline");
   const srcdir = options?.srcdir ?? "src";
   const distdir = options?.distdir ?? (type === ConfigType.APP ? "lib" : "dist");
-  
 
   const pkg = JSON.parse(readFileSync(resolve(dirname, pkgname), { encoding: "utf-8" }));
 
@@ -23,16 +22,17 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
   const version = pkg.version;
   const buildDate = new Date().toISOString();
 
-  const basedist = type === ConfigType.APP ? "../.." : "."
+  const basedist = type === ConfigType.APP ? "../.." : ".";
   const entry = resolve(dirname, srcdir, indexname);
 
-  let externalsConfig = undefined;
-  let typescriptConfig = undefined;
+  let externalsConfig: ExternalsOptions | undefined = undefined;
+  let typescriptConfig: RollupTypescriptOptions | undefined = undefined;
   if (type !== ConfigType.APP) {
     typescriptConfig = {
       rootDir: resolve(dirname, srcdir),
       declaration: true,
-      declarationDir: resolve(dirname, basedist, distdir),
+      outDir: resolve(dirname, basedist, distdir),
+      outputToFilesystem: true,
     };
   }
 
