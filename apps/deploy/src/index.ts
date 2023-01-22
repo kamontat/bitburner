@@ -1,5 +1,5 @@
 import { Context } from "@kcbb-libs/commandline";
 
-console.log(Context.get());
+console.log(Context);
 
 export {};

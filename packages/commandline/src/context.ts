@@ -1,18 +1,11 @@
 import { Logger } from "@kcbb-libs/logger";
 import { Cache } from "@kcbb-libs/cache";
 import { Graph } from "@kcbb-libs/graph";
+import { Result } from "./interfaces";
 
 export class Context {
-  private static _instance: Context;
-
   static init(ns: NS): Context {
-    if (!Context._instance) Context._instance = new Context(ns);
-    return Context._instance;
-  }
-
-  static get(): Context {
-    if (!Context._instance) throw new Error(`Initiate context before call .get()`);
-    return Context._instance;
+    return new Context(ns);
   }
 
   readonly logger: Logger;
@@ -29,7 +22,16 @@ export class Context {
     });
   }
 
-  exit() {
+  exit(cb?: () => void) {
+    cb && this.ns.atExit(cb);
     this.ns.exit();
+  }
+
+  debugResult<M extends Record<string, unknown>>(result: Result<M>): void {
+    this.logger.tdebug("Commands: %s", result.commands);
+    Object.keys(result.options).forEach(key => {
+      const value = result.options[key];
+      this.logger.tdebug("  - %s = %s", key, value);
+    });
   }
 }

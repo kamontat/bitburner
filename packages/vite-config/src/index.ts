@@ -11,9 +11,10 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
   const dirname = options.dirname;
   const pkgname = options?.pkgname ?? "package.json";
   const indexname = options?.indexname ?? "index.ts";
-  const sourcemap = options?.sourcemap ?? "inline";
+  const sourcemap = options?.sourcemap ?? (type === ConfigType.APP ? false : "inline");
   const srcdir = options?.srcdir ?? "src";
-  const distdir = options?.distdir ?? "dist";
+  const distdir = options?.distdir ?? (type === ConfigType.APP ? "lib" : "dist");
+  
 
   const pkg = JSON.parse(readFileSync(resolve(dirname, pkgname), { encoding: "utf-8" }));
 
@@ -22,8 +23,8 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
   const version = pkg.version;
   const buildDate = new Date().toISOString();
 
+  const basedist = type === ConfigType.APP ? "../.." : "."
   const entry = resolve(dirname, srcdir, indexname);
-  const dir = type === ConfigType.APP ? `../../${distdir}` : distdir;
 
   let externalsConfig = undefined;
   let typescriptConfig = undefined;
@@ -31,7 +32,7 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
     typescriptConfig = {
       rootDir: resolve(dirname, srcdir),
       declaration: true,
-      declarationDir: resolve(dirname, distdir),
+      declarationDir: resolve(dirname, basedist, distdir),
     };
   }
 
@@ -59,7 +60,7 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
       rollupOptions: {
         input: entry,
         output: {
-          dir,
+          dir: resolve(basedist, distdir),
         },
         plugins: [externals(externalsConfig), typescript(typescriptConfig)],
       },

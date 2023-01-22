@@ -6,9 +6,6 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
-    "start:init": "node dist/init.js",
-    "start:hack": "node dist/hack.js",
-    "start:deploy": "node dist/deploy.js",
-    "start:ps": "node dist/purchase-server.js"
+    "push": "pnpm -r build && node scripts/push.js"
   }
 }

@@ -1,16 +1,8 @@
 import { checkLevel, getLevel, Level, LEVEL_DEBUG, LEVEL_ERROR, LEVEL_INFO, LEVEL_WARN } from "./level";
 
 export class Logger {
-  private static _instance: Logger;
-
   static init(ns: NS): Logger {
-    if (!Logger._instance) Logger._instance = new Logger(ns);
-    return Logger._instance;
-  }
-
-  static get(): Logger {
-    if (!Logger._instance) throw new Error(`Initiate logger before call .get()`);
-    return Logger._instance;
+    return new Logger(ns);
   }
 
   private levels: string[];
@@ -63,7 +55,7 @@ export class Logger {
   }
 
   print(format: string, ...args: unknown[]) {
-    this.ns.tprintf(format, args);
+    this.ns.tprintf(format, ...args);
   }
 
   private _log(lvl: Level, format: string, ...args: unknown[]) {

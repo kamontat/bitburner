@@ -45,11 +45,29 @@
       "path": "./types/packages"
     },
     {
+      "name": "scripts",
+      "path": "./scripts"
+    },
+    {
       "name": "root",
       "path": "."
     }
   ],
   "settings": {
     "testing.automaticallyOpenPeekView": "never"
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "deploy",
+        "type": "shell",
+        "command": "pnpm push",
+        "problemMatcher": [],
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        }
+      }
+    ]
   }
 }

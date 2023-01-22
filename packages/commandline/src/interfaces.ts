@@ -19,18 +19,26 @@ export interface Result<M> {
 }
 
 export type Converter<T> = ValueCallback<string, T>;
+export type VerifierFn<T> = ValueCallback<T, Error | undefined>
+
+export interface OptionHelp {
+  description?: string
+}
 
 export interface OptionData<N extends string, T> {
   name: N;
   options: string[];
+  help?: OptionHelp;
   /** convert raw data from input to certain data type */
   convert: Converter<T>;
+  /** convert data back to string for help message */
+  asString?: ValueCallback<T, string>;
   /** define default value if no user input */
   default?: EmptyCallback<T>;
   /** verify option value */
-  verify?: ValueCallback<T, Error | undefined>;
+  verify?: VerifierFn<T>;
   /** perform action on option value */
   exec?: ValueCallback<T, void>;
 }
 
-export type DefineOption<I, N extends string, T> = (input: I) => OptionData<N, T>;
+export type DefineOption<I extends any[], N extends string, T> = (...input: I) => OptionData<N, T>;

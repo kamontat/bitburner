@@ -7,19 +7,13 @@ export const parseKeyValue = (
   const _current = current.toString();
   const _next = next?.toString() ?? undefined;
 
-  if (_current.startsWith("--")) {
-    const equalSign = _current.indexOf("=");
-    if (equalSign < 0) return { key: _current, value: _next ?? "true", skip: 1 };
+  if (!_next || _next.startsWith("-")) return { key: _current, value: "true", skip: 0 };
 
-    const key = _current.substring(0, equalSign);
-    const value = _current.substring(equalSign + 1);
-    return { key, value, skip: 0 };
-  }
+  const equalSign = _current.indexOf("=");
+  if (equalSign < 0) return { key: _current, value: _next ?? "true", skip: 1 };
 
-  const length = _current.length;
-  if (length <= 2) return { key: _current, value: "true", skip: 1 };
-  const key = _current.substring(0, 2);
-  const value = _current.substring(3);
+  const key = _current.substring(0, equalSign);
+  const value = _current.substring(equalSign + 1);
   return { key, value, skip: 0 };
 };
 

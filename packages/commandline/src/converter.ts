@@ -26,4 +26,8 @@ export class Converter {
         throw new Error(`Cannot convert ${input} to boolean`);
     }
   }
+
+  static array(input: string): string[] {
+    return input.split(",")
+  }
 }
