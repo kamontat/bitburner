@@ -19,10 +19,10 @@ export interface Result<M> {
 }
 
 export type Converter<T> = ValueCallback<string, T>;
-export type VerifierFn<T> = ValueCallback<T, Error | undefined>
+export type VerifierFn<T> = ValueCallback<T, Error | undefined>;
 
 export interface OptionHelp {
-  description?: string
+  description?: string;
 }
 
 export interface OptionData<N extends string, T> {
@@ -39,6 +39,18 @@ export interface OptionData<N extends string, T> {
   verify?: VerifierFn<T>;
   /** perform action on option value */
   exec?: ValueCallback<T, void>;
+}
+
+export interface CommandHelp {
+  description?: string;
+}
+
+export interface CommandData<N extends string> {
+  name: N;
+  commands: string[];
+  help?: CommandHelp;
+  verify?: VerifierFn<string[]>;
+  exec?: ValueCallback<string[], void>;
 }
 
 export type DefineOption<I extends any[], N extends string, T> = (...input: I) => OptionData<N, T>;

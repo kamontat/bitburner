@@ -31,7 +31,7 @@ export class Commandline<M> {
     this._options = [];
   }
 
-  default(logNames: string[], name: string, version: string, date: string) {
+  default(name: string, version: string, date: string, logNames: string[]) {
     return this.options(defineLoggerOption(logNames))
       .options(defineHelpOption())
       .options(defineVersionOption(version))
