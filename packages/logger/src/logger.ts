@@ -1,3 +1,4 @@
+import { LOGGER_INPUT_SEPARATOR } from "./constants";
 import { checkLoggerName, getLoggerName } from "./name";
 import { LoggerOutput } from "./output";
 
@@ -13,18 +14,24 @@ export class Logger {
   }
 
   enableName(s: string): this {
-    this.ns.enableLog(s);
-    const name = getLoggerName(s);
+    if (s.includes(LOGGER_INPUT_SEPARATOR)) {
+      const name = getLoggerName(s);
+      this.names[name.key] = name.output;
+    } else {
+      this.ns.enableLog(s);
+    }
 
-    this.names[name.key] = name.output;
     return this;
   }
 
   disableName(s: string): this {
-    this.ns.disableLog(s);
-    const name = getLoggerName(s);
+    if (s.includes(LOGGER_INPUT_SEPARATOR)) {
+      const name = getLoggerName(s);
+      delete this.names[name.key];
+    } else {
+      this.ns.disableLog(s);
+    }
 
-    delete this.names[name.key];
     return this;
   }
 

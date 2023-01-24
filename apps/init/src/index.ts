@@ -1,13 +1,86 @@
-import { Commandline, Defaults } from "@kcbb-libs/commandline";
+import { Commandline, Defaults, Converts, Verifies } from "@kcbb-libs/commandline";
 
 const main: MainFunction = async ns => {
   await Commandline.init(ns)
     .options({
+      key: "log",
+      values: ["--log", "-l"],
+      default: Defaults.constant([]),
+      convert: Converts.array,
+      event: {
+        verify: Verifies.required("log"),
+        loaded: (value, ctx) => {
+          value.forEach(v => ctx.logger.enableName(v));
+        },
+      },
+    })
+    .options({
       key: "version",
       values: ["--version", "-v"],
       default: Defaults.constant(false),
+      event: {
+        loaded: (value, ctx) => {
+          if (value === true) {
+            ctx.exit(() => {
+              ctx.logger.print(`%s: %s (%s)`, __NAME__, __VERSION__, __BUILD_DATE__);
+            });
+          }
+        },
+      },
     })
-    .build();
+    .options({
+      key: "help",
+      values: ["--help", "-h"],
+      default: Defaults.constant(false),
+    })
+    .events({
+      verify: result => {
+        if (result.unknown.length > 0) {
+          return new Error(`Invalid commands/options: ${result.unknown.join(",")}`);
+        }
+        return undefined;
+      },
+    })
+    .events({
+      loaded: (result, ctx) => {
+        if (result.options.help !== true) {
+          return;
+        }
+
+        const commands = ctx.help.listCmd().reduce((prev, [_, value]) => {
+          let command = value.values.join(",");
+          let description = value.description;
+
+          return `${prev}
+  - ${command}: ${description}`;
+        }, "");
+
+        const options = ctx.help.listOpt().reduce((prev, [_, value]) => {
+          let option = value.values.join(",");
+          let prefix = "";
+          let description = value.description;
+          let suffix = "";
+
+          if (value.defaultFn && value.default) {
+            prefix = "[<optional>] ";
+            suffix = ` (${value.defaultFn(value.default(ctx), ctx)})`;
+          } else {
+            prefix = "[<required>] ";
+          }
+
+          return `${prev}
+  - ${option}: ${prefix}${description}${suffix}`;
+        }, "");
+
+        const help = `${ctx.name} usage
+Commands: ${commands}
+Options: ${options}`;
+        ctx.logger.print(help);
+      },
+    })
+    .build((res, ctx) => {
+      ctx.debugResult(res);
+    });
 
   // Commandline.init(ns)
   //   .default(["nuke"], __NAME__, __VERSION__, __BUILD_DATE__)
@@ -25,7 +98,7 @@ const main: MainFunction = async ns => {
   //         ctx.logger.debug(
   //           "%s require hacking skill too high (%d > %d)",
   //           host,
-  //           server.requiredHackingSkill,
+  //           server.requiredHackingSkill,f
   //           hackingSkill
   //         );
   //         return;

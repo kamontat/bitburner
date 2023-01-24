@@ -1,14 +1,21 @@
-import { ArgumentType, ActionFn, ConvertFn, DefaultFn, VerifyFn, EmptyCallback } from "./types";
+import { ArgumentType, ActionFn, ConvertFn, DefaultFn, VerifyFn, EmptyCallback, DefaultStringFn } from "./types";
 
-export interface HelpValue {
+export interface HelpValue<T> {
   description?: string;
-  default?: DefaultFn<string>;
+  defaultFn?: DefaultStringFn<T>;
+}
+
+export interface FullHelpValue<T> extends HelpValue<T> {
+  /** values from Data */
+  values: string[],
+  /** default value from Data */
+  default?: DefaultFn<T>,
 }
 
 export interface Event<O> {
   /** perform no -side-effect action before loading data */
   preload?: EmptyCallback<void>;
-  /** perform no side-effect action after loading this data */
+  /** perform no side-effect action after loading all data */
   loaded?: ActionFn<O>;
   /** verify data after loading input */
   verify?: VerifyFn<O>;
@@ -33,9 +40,9 @@ export interface Data<N extends string, T> {
   /** data possible values */
   values: string[];
   /** help of this data */
-  help?: HelpValue;
+  help?: HelpValue<T>;
   /** event callback */
-  event?: DataEvent<T | undefined>;
+  event?: DataEvent<T>;
 }
 
 export interface OptionData<N extends string, T> extends Data<N, T> {

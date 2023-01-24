@@ -27,7 +27,11 @@ export class Converts {
     }
   }
 
-  static array(input: string): string[] {
+  static separatorArray(input: string): string[] {
     return input.split(",")
+  }
+
+  static array(input: string): string[] {
+    return [input]
   }
 }

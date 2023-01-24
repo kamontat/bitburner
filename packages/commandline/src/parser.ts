@@ -5,7 +5,7 @@ import { isOption } from "./utils";
 
 interface OptionMapper<K, V> {
   key: K;
-  value: V | undefined;
+  value: V;
   skip: number;
 }
 
@@ -21,7 +21,7 @@ const _parseEqualOption = (current: string): OptionMapper<string, string> | unde
   return undefined;
 };
 
-const _parseOption = (current: string, next: string | undefined): OptionMapper<string, string> => {
+const _parseOption = (current: string, next: string | undefined): OptionMapper<string, string | undefined> => {
   const equals = _parseEqualOption(current);
   if (equals) return equals;
 
@@ -57,7 +57,7 @@ export const parseOption = async <M>(
   const raw = data.convert ? _parseOption(current, next) : _parseFlag(current, next);
   const option: OptionMapper<keyof M, M[keyof M]> = {
     key: data.key as keyof M,
-    value: undefined,
+    value: undefined as M[keyof M],
     skip: raw.skip,
   };
 

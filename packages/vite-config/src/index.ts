@@ -55,6 +55,7 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
     build: {
       sourcemap,
       minify: false,
+      emptyOutDir: false,
       lib: {
         formats: ["es"],
         entry,

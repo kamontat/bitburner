@@ -9,3 +9,4 @@ export type ConvertFn<T> = ValueCallback<string, T>;
 export type VerifyFn<T> = ValueCallback<T, Error | undefined>;
 export type DefaultFn<T> = EmptyCallback<T>;
 export type ActionFn<T> = ValueCallback<T, void>;
+export type DefaultStringFn<T> = ValueCallback<T, string>;

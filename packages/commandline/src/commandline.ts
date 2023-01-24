@@ -4,6 +4,13 @@ import { parseOption } from "./parser";
 import { ArgumentType, ActionFn } from "./types";
 import { findCommands, findOptions, isOption } from "./utils";
 
+export type CommandlineBuilder<
+  CK extends string,
+  OM extends Record<string, unknown>,
+  BCK extends string,
+  BOM extends Record<string, unknown>
+> = (cli: Commandline<CK, OM>) => Commandline<CK | BCK, OM & BOM>;
+
 export class Commandline<CK extends string, OM extends Record<string, unknown>> {
   static init(ns: NS) {
     ns.disableLog("ALL");
@@ -34,17 +41,27 @@ export class Commandline<CK extends string, OM extends Record<string, unknown>> 
 
   commands<N extends string>(data: CommandData<N>): Commandline<CK | N, OM> {
     this._commands[data.key] = data;
+    this._context.help.addCmd(data);
+
     return this as Commandline<CK | N, OM>;
   }
 
   options<N extends string, T>(data: OptionData<N, T>): Commandline<CK, OM & Record<N, T | undefined>> {
     this._options[data.key] = data as OptionData<string, OM[keyof OM]>;
+    this._context.help.addOpt(data);
+
     return this as Commandline<CK, OM & Record<N, T | undefined>>;
   }
 
   events(data: CommandlineEvent<ResultMapper<CK, OM>, CK, OM>): this {
     this._events.push(data);
     return this;
+  }
+
+  builder<BCK extends string, BOM extends Record<string, unknown>>(
+    builder: CommandlineBuilder<CK, OM, BCK, BOM>
+  ): Commandline<CK | BCK, OM & BOM> {
+    return builder(this);
   }
 
   async build(cb?: ActionFn<ResultMapper<CK, OM>>): Promise<void> {
@@ -78,6 +95,7 @@ export class Commandline<CK extends string, OM extends Record<string, unknown>> 
         if (value !== undefined) {
           const oldValue = result.options[key];
           const newValue = Array.isArray(oldValue) ? (oldValue.concat(value) as OM[keyof OM]) : value;
+
           result.options[key] = newValue;
         }
 
@@ -86,6 +104,20 @@ export class Commandline<CK extends string, OM extends Record<string, unknown>> 
         remains.push(sarg);
       }
     }
+
+    // load default 'options'
+    await Promise.all(
+      Object.keys(this._options).map(async key => {
+        const option = this._options[key];
+        if (result.options[key] === undefined && option.default) {
+          await option.event?.preload?.(this._context);
+          const value = await option.default(this._context);
+          await option.event?.load?.(value, this._context);
+
+          result.options[key as keyof OM] = value;
+        }
+      })
+    );
 
     // load 'commands'
     if (remains.length > 0) {
@@ -107,8 +139,8 @@ export class Commandline<CK extends string, OM extends Record<string, unknown>> 
     }
 
     // call events
-    await this._callLoadEvents(result);
     await this._callVerifyEvents(result);
+    await this._callLoadedEvents(result);
 
     if (cb) await cb(result, this._context);
   }
@@ -122,7 +154,7 @@ export class Commandline<CK extends string, OM extends Record<string, unknown>> 
     return;
   }
 
-  private async _callLoadEvents(mapper: ResultMapper<CK, OM>): Promise<void> {
+  private async _callLoadedEvents(mapper: ResultMapper<CK, OM>): Promise<void> {
     const results = [];
 
     // Loaded commands
@@ -146,7 +178,7 @@ export class Commandline<CK extends string, OM extends Record<string, unknown>> 
     const _errors: Promise<Error | undefined>[] = [];
 
     // Verify individual command
-    const commandResult = Object.keys(mapper.commands).map(key =>
+    const commandResult = Object.keys(this._commands).map(key =>
       Promise.resolve(this._commands[key].event?.verify?.(mapper.commands[key as CK], this._context))
     );
     _errors.push(...commandResult);
@@ -156,8 +188,8 @@ export class Commandline<CK extends string, OM extends Record<string, unknown>> 
     );
     _errors.push(...commandsResult);
     // Verify individual option
-    const optionResult = Object.keys(mapper.options).map(key =>
-      Promise.resolve(this._options[key].event?.verify?.(mapper.options[key as keyof OM], this._context))
+    const optionResult = Object.keys(this._options).map(key =>
+      Promise.resolve(this._options[key].event?.verify?.(mapper.options[key as CK], this._context))
     );
     _errors.push(...optionResult);
     // Verify all options

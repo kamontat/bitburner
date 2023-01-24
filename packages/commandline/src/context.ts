@@ -1,6 +1,7 @@
 import { Cache } from "@kcbb-libs/cache";
 import { Graph } from "@kcbb-libs/graph";
 import { Logger } from "@kcbb-libs/logger";
+import { Help } from "./help";
 import { ResultMapper } from "./interfaces";
 
 export class Context {
@@ -15,9 +16,11 @@ export class Context {
   readonly logger: Logger;
   readonly cache: Cache;
   readonly graph: Graph;
+  readonly help: Help;
 
   private constructor(readonly ns: NS, readonly name: string) {
     this.cache = Cache.get();
+    this.help = Help.init();
 
     this.logger = Logger.init(ns);
     this.graph = Graph.init({
