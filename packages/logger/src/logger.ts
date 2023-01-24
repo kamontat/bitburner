@@ -1,72 +1,53 @@
-import { checkLevel, getLevel, Level, LEVEL_DEBUG, LEVEL_ERROR, LEVEL_INFO, LEVEL_WARN } from "./level";
+import { checkLoggerName, getLoggerName } from "./name";
+import { LoggerOutput } from "./output";
 
 export class Logger {
   static init(ns: NS): Logger {
     return new Logger(ns);
   }
 
-  private levels: string[];
+  private names: Record<string, LoggerOutput[]>;
 
   constructor(private ns: NS) {
-    this.levels = [];
+    this.names = {};
   }
 
-  setLevels(lvl: string) {
-    this.levels = getLevel(lvl);
+  enableName(s: string): this {
+    this.ns.enableLog(s);
+    const name = getLoggerName(s);
+
+    this.names[name.key] = name.output;
+    return this;
   }
 
-  enable(...names: string[]) {
-    this.ns.disableLog("ALL");
-    for (const name of names) {
-      this.ns.enableLog(name);
-    }
+  disableName(s: string): this {
+    this.ns.disableLog(s);
+    const name = getLoggerName(s);
+
+    delete this.names[name.key];
+    return this;
   }
 
-  debug(format: string, ...args: unknown[]) {
-    this._log(LEVEL_DEBUG, format, ...args);
-  }
+  log(name: string, format: string, ...args: unknown[]) {
+    const outputs = checkLoggerName(name, this.names);
+    const result = this._format(name, format, ...args);
 
-  tdebug(format: string, ...args: unknown[]) {
-    this._print(LEVEL_DEBUG, format, ...args);
-  }
-
-  info(format: string, ...args: unknown[]) {
-    this._log(LEVEL_INFO, format, ...args);
-  }
-
-  tinfo(format: string, ...args: unknown[]) {
-    this._print(LEVEL_INFO, format, ...args);
-  }
-
-  warn(format: string, ...args: unknown[]) {
-    this._log(LEVEL_WARN, format, ...args);
-  }
-
-  twarn(format: string, ...args: unknown[]) {
-    this._print(LEVEL_WARN, format, ...args);
-  }
-
-  error(format: string, ...args: unknown[]) {
-    this._log(LEVEL_ERROR, format, ...args);
-  }
-
-  terror(format: string, ...args: unknown[]) {
-    this._print(LEVEL_ERROR, format, ...args);
+    outputs.forEach(out => {
+      switch (out) {
+        case LoggerOutput.LOG:
+          this.ns.print(result);
+          return;
+        case LoggerOutput.TERMINAL:
+          this.ns.tprint(result);
+      }
+    });
   }
 
   print(format: string, ...args: unknown[]) {
     this.ns.tprintf(format, ...args);
   }
 
-  private _log(lvl: Level, format: string, ...args: unknown[]) {
-    if (checkLevel(this.levels, lvl)) {
-      this.ns.printf(format, ...args);
-    }
-  }
-
-  private _print(lvl: Level, format: string, ...args: unknown[]) {
-    if (checkLevel(this.levels, lvl)) {
-      this.ns.tprintf(format, ...args);
-    }
+  private _format(name: string, format: string, ...args: unknown[]) {
+    return this.ns.sprintf(`[%s] ${format}`, name, ...args);
   }
 }

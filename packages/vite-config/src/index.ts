@@ -33,6 +33,10 @@ export const defineConfig = (type: ConfigType, options: ConfigOptions): UserConf
       declaration: true,
       outDir: resolve(dirname, basedist, distdir),
       outputToFilesystem: true,
+      sourceMap: true,
+      inlineSourceMap: true,
+
+      declarationMap: true,
     };
   }
 

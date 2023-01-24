@@ -1,117 +1,179 @@
-import type { ArgumentType, OptionData, OptionMapper, Result, ValueCallback } from "./interfaces";
-
 import { Context } from "./context";
-import { parseMapper } from "./parser";
-import { defineHelpOption, defineInfoOption, defineLoggerOption, defineVersionOption } from "./constants";
+import { CommandData, CommandlineEvent, OptionData, ResultMapper } from "./interfaces";
+import { parseOption } from "./parser";
+import { ArgumentType, ActionFn } from "./types";
+import { findCommands, findOptions, isOption } from "./utils";
 
-export class Commandline<M> {
-  static init(ns: NS): Commandline<{}> {
+export class Commandline<CK extends string, OM extends Record<string, unknown>> {
+  static init(ns: NS) {
     ns.disableLog("ALL");
-    return new Commandline(ns.getScriptName(), ns.args, Context.init(ns));
+    return new Commandline<"", {}>(ns.args, Context.init(ns));
   }
 
-  // For testing only
-  static test(name: string, args: ArgumentType[]): Commandline<{}> {
-    return new Commandline(name, args, Context.init(undefined as any));
+  static mock(name: string, args: ArgumentType[]) {
+    return new Commandline<"", {}>(args, Context.mock(name));
   }
 
-  private _mapper: OptionMapper;
-  private _options: OptionData<string, unknown>[];
+  private _args: ArgumentType[];
+  private _context: Context;
 
-  
-  private _result: Result<Record<string, unknown>>;
+  private _commands: Record<string, CommandData<string>>;
+  private _options: Record<string, OptionData<string, OM[keyof OM]>>;
 
-  private constructor(private name: string, args: ArgumentType[], private context: Context) {
-    this._mapper = parseMapper(args);
-    this._result = {
-      commands: this._mapper.commands,
-      raw: this._mapper.raw,
-      options: {},
+  private _events: CommandlineEvent<ResultMapper<CK, OM>, CK, OM>[];
+
+  private constructor(args: ArgumentType[], context: Context) {
+    this._args = args;
+    this._context = context;
+
+    this._commands = {};
+    this._options = {};
+
+    this._events = [];
+  }
+
+  commands<N extends string>(data: CommandData<N>): Commandline<CK | N, OM> {
+    this._commands[data.key] = data;
+    return this as Commandline<CK | N, OM>;
+  }
+
+  options<N extends string, T>(data: OptionData<N, T>): Commandline<CK, OM & Record<N, T | undefined>> {
+    this._options[data.key] = data as OptionData<string, OM[keyof OM]>;
+    return this as Commandline<CK, OM & Record<N, T | undefined>>;
+  }
+
+  events(data: CommandlineEvent<ResultMapper<CK, OM>, CK, OM>): this {
+    this._events.push(data);
+    return this;
+  }
+
+  async build(cb?: ActionFn<ResultMapper<CK, OM>>): Promise<void> {
+    await this._callPreloadEvents();
+    const result: ResultMapper<CK, OM> = {
+      commands: {} as Record<CK, string[]>,
+      options: {} as OM,
+      unknown: [],
+      raw: this._args,
     };
 
-    this._options = [];
-  }
+    const remains: string[] = [];
 
-  default(name: string, version: string, date: string, logNames: string[]) {
-    return this.options(defineLoggerOption(logNames))
-      .options(defineHelpOption())
-      .options(defineVersionOption(version))
-      .options(defineInfoOption(name, version, date));
-  }
+    // load 'options'
+    for (let i = 0; i < this._args.length; i++) {
+      const arg = this._args[i];
+      const sarg = arg.toString();
 
-  options<N extends string, T>(data: OptionData<N, T>): Commandline<M & Record<N, T>> {
-    this._options.push(data as OptionData<string, unknown>);
-    return this as Commandline<M & Record<N, T>>;
-  }
+      if (isOption(sarg)) {
+        const matched = findOptions(this._options, sarg);
+        if (matched === undefined) {
+          result.unknown.push(arg);
+          continue;
+        }
 
-  async build(cb: ValueCallback<Result<M>, Promise<void>>): Promise<void> {
-    const errors: Error[] = [];
-    const options: string[] = [];
-    for (const data of this._options) {
-      let raw = this.getMapper(...data.options);
+        await matched.event?.preload?.(this._context);
+        const next = i < this._args.length - 1 ? this._args[i + 1] : undefined;
 
-      if (raw === undefined && !data.default)
-        errors.push(new Error(`'${data.name}' is requires option, please add either [${data.options}]`));
+        const { key, value, skip } = await parseOption(matched, sarg, next?.toString(), this._context);
+        await matched.event?.load?.(value, this._context);
+        if (value !== undefined) {
+          const oldValue = result.options[key];
+          const newValue = Array.isArray(oldValue) ? (oldValue.concat(value) as OM[keyof OM]) : value;
+          result.options[key] = newValue;
+        }
 
-      if (raw === undefined && data.default) {
-        this._result.options[data.name] = data.default(this.context);
-      } else if (raw !== undefined) {
-        this._result.options[data.name] = data.convert(raw, this.context);
+        i += skip;
+      } else {
+        remains.push(sarg);
       }
-
-      if (data.verify) {
-        const result = this._result.options[data.name];
-        const error = data.verify(result, this.context);
-        if (error) errors.push(error);
-      }
-
-      if (data.exec) {
-        const result = this._result.options[data.name];
-        data.exec(result, this.context);
-      }
-
-      let option = data.options.join(",");
-      let prefix = "";
-      let description = data.help?.description ?? "<no-description>";
-      let suffix = "";
-
-      if (!data.default) prefix = "[<required>]";
-      if (data.default) {
-        prefix = "[<optional>]";
-        const def = data.default(this.context) as string;
-
-        if (data.asString) suffix = `(${data.asString(def, this.context)})`;
-        else suffix = `(${def})`;
-      }
-
-      options.push(`'${option}': ${prefix} ${description} ${suffix}`);
     }
 
-    if (this._result.options["help"]) {
-      this.context.exit(() => {
-        this.context.logger.print(
-          `Usage %s
-  options:
-    - %s
-`,
-          this.name,
-          options.join("\n    - ")
+    // load 'commands'
+    if (remains.length > 0) {
+      const matched = findCommands<CK>(this._commands, remains);
+      if (matched.length > 0) {
+        await Promise.all(
+          matched.map(async match => {
+            await match.event?.preload?.(this._context);
+
+            const values = remains.slice(match.values.length);
+            result.commands[match.key] = values;
+
+            await match.event?.load?.(values, this._context);
+          })
         );
-      });
-    } else {
-      if (errors.length > 0) throw new Error(`${errors.length} errors found: ${errors}`);
-      await cb(this._result as Result<M>, this.context);
+      } else {
+        result.unknown.push(...remains);
+      }
     }
+
+    // call events
+    await this._callLoadEvents(result);
+    await this._callVerifyEvents(result);
+
+    if (cb) await cb(result, this._context);
+  }
+
+  private async _callPreloadEvents(): Promise<void> {
+    const result = this._events
+      .filter(e => e.preload !== undefined)
+      .map(event => Promise.resolve(event.preload?.(this._context)));
+    await Promise.all(result);
 
     return;
   }
 
-  private getMapper(...fields: string[]): string | undefined {
-    for (const field of fields) {
-      const value = this._mapper.options[field];
-      if (value !== undefined && value !== null) return value;
+  private async _callLoadEvents(mapper: ResultMapper<CK, OM>): Promise<void> {
+    const results = [];
+
+    // Loaded commands
+    const commandsResult = Object.keys(mapper.commands).map(key =>
+      Promise.resolve(this._commands[key].event?.loaded?.(mapper.commands[key as CK], this._context))
+    );
+    results.push(...commandsResult);
+    // Loaded options
+    const optionsResult = Object.keys(mapper.options).map(key =>
+      Promise.resolve(this._options[key].event?.loaded?.(mapper.options[key as keyof OM], this._context))
+    );
+    results.push(...optionsResult);
+    // Loaded commandline
+    results.push(...this._events.map(event => Promise.resolve(event.loaded?.(mapper, this._context))));
+
+    await Promise.all(results);
+    return;
+  }
+
+  private async _callVerifyEvents(mapper: ResultMapper<CK, OM>): Promise<void> {
+    const _errors: Promise<Error | undefined>[] = [];
+
+    // Verify individual command
+    const commandResult = Object.keys(mapper.commands).map(key =>
+      Promise.resolve(this._commands[key].event?.verify?.(mapper.commands[key as CK], this._context))
+    );
+    _errors.push(...commandResult);
+    // Verify all commands
+    const commandsResult = this._events.map(event =>
+      Promise.resolve(event.verifyCommand?.(mapper.commands, this._context))
+    );
+    _errors.push(...commandsResult);
+    // Verify individual option
+    const optionResult = Object.keys(mapper.options).map(key =>
+      Promise.resolve(this._options[key].event?.verify?.(mapper.options[key as keyof OM], this._context))
+    );
+    _errors.push(...optionResult);
+    // Verify all options
+    const optionsResult = this._events.map(event =>
+      Promise.resolve(event.verifyOption?.(mapper.options, this._context))
+    );
+    _errors.push(...optionsResult);
+    // Verify commandline
+    const result = this._events.map(event => Promise.resolve(event.verify?.(mapper, this._context)));
+    _errors.push(...result);
+
+    const errors = await Promise.all(_errors).then(e => e.filter(v => v !== undefined) as Error[]);
+    if (errors.length > 0) {
+      throw new Error(`${errors.length} errors found: ${errors.map(e => `'${e.message}'`).join(",")}`);
     }
 
-    return undefined;
+    return;
   }
 }

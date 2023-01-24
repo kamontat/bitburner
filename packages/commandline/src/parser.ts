@@ -1,44 +1,72 @@
-import type { ArgumentType, KV, OptionMapper } from "./interfaces";
+import { Context } from "./context";
+import { Converts } from "./converts";
+import { OptionData } from "./interfaces";
+import { isOption } from "./utils";
 
-export const parseKeyValue = (
-  current: ArgumentType,
-  next: ArgumentType | undefined
-): KV<string, string> & { skip: number } => {
-  const _current = current.toString();
-  const _next = next?.toString() ?? undefined;
+interface OptionMapper<K, V> {
+  key: K;
+  value: V | undefined;
+  skip: number;
+}
 
-  if (!_next || _next.startsWith("-")) return { key: _current, value: "true", skip: 0 };
-
-  const equalSign = _current.indexOf("=");
-  if (equalSign < 0) return { key: _current, value: _next ?? "true", skip: 1 };
-
-  const key = _current.substring(0, equalSign);
-  const value = _current.substring(equalSign + 1);
-  return { key, value, skip: 0 };
-};
-
-export const parseMapper = (args: ArgumentType[]): OptionMapper => {
-  const result: OptionMapper = {
-    commands: [],
-    options: {},
-    raw: args,
-  };
-
-  for (let i = 0; i < args.length; i++) {
-    const current = args[i];
-    const currentStr = current.toString();
-    const isOption = currentStr.startsWith("-");
-
-    if (!isOption) {
-      result.commands.push(current);
-      continue;
-    }
-
-    const next = i < args.length - 1 ? args[i + 1] : undefined;
-    const kv = parseKeyValue(current, next);
-    result.options[kv.key] = kv.value;
-    i += kv.skip;
+const _parseEqualOption = (current: string): OptionMapper<string, string> | undefined => {
+  const equals = current.indexOf("=");
+  // contains '=' (equals), meaning value is on option argument itself
+  if (equals > 0) {
+    const key = current.substring(0, equals);
+    const value = current.substring(equals + 1);
+    return { key, value, skip: 0 };
   }
 
-  return result;
+  return undefined;
+};
+
+const _parseOption = (current: string, next: string | undefined): OptionMapper<string, string> => {
+  const equals = _parseEqualOption(current);
+  if (equals) return equals;
+
+  // using next as value for current option
+  if (next && !isOption(next)) {
+    return { key: current, value: next, skip: 1 };
+  }
+
+  // doesn't has next value
+  return { key: current, value: undefined, skip: 0 };
+};
+
+const _parseFlag = (current: string, next: string | undefined): OptionMapper<string, string> => {
+  const equals = _parseEqualOption(current);
+  if (equals) return equals;
+
+  // using next as value for current option
+  if (next === "true" || next === "false") {
+    return { key: current, value: next, skip: 1 };
+  }
+
+  // doesn't has next value
+  return { key: current, value: "true", skip: 0 };
+};
+
+export const parseOption = async <M>(
+  data: OptionData<string, M[keyof M]>,
+  current: string,
+  next: string | undefined,
+  ctx: Context
+): Promise<OptionMapper<keyof M, M[keyof M]>> => {
+  // If no convert function, we will never parse next argument
+  const raw = data.convert ? _parseOption(current, next) : _parseFlag(current, next);
+  const option: OptionMapper<keyof M, M[keyof M]> = {
+    key: data.key as keyof M,
+    value: undefined,
+    skip: raw.skip,
+  };
+
+  if (raw.value === undefined && data.default) {
+    option.value = await data.default(ctx);
+  } else if (raw.value !== undefined) {
+    if (data.convert) option.value = await data.convert(raw.value, ctx);
+    else option.value = Converts.bool(raw.value) as M[keyof M];
+  }
+
+  return option;
 };

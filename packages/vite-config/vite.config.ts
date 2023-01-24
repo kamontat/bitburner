@@ -18,10 +18,7 @@ export default defineConfig({
       output: {
         dir: "dist",
       },
-      external: [
-        "@rollup/plugin-typescript", "rollup-plugin-node-externals",
-        "path", "fs", "url"
-      ],
+      external: ["@rollup/plugin-typescript", "rollup-plugin-node-externals", "path", "fs", "url"],
       plugins: [
         externals(),
         typescript({

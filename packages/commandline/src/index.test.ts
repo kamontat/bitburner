@@ -1,61 +1,83 @@
 import { describe, it } from "vitest";
 import { Commandline } from "./commandline";
-import { Converter } from "./converter";
 
 describe("default", () => {
-  it("default", () => {
-    Commandline.test("test", ["hello", "-T=test", "--money=1"])
-      .options({
-        name: "target",
-        options: ["--target", "-T"],
-        convert: Converter.string,
-      })
-      .options({
-        name: "money",
-        options: ["--money", "-M"],
-        convert: Converter.float,
-        default: () => 100.0,
-      })
-      .build(async (value, ctx) => {
-        console.log(value);
-        console.log(ctx);
-      });
-
-    Commandline.init(undefined as unknown as NS)
-      .default("@kcws/test", "0.0.1", "2023-01-01", [])
-      .options({
-        name: "upgrade",
-        values: ["--upgrade", "-U"],
-        convert: Converts.string,
-        // optional
-        help: { description: "", default: d => d.toString() },
-        // optional
-        default: Defaults.constant("test"),
-        // optional
-        verify: () => new Error("verify failed"),
-        // optional
-        exec: (opts, ctx) => {
-          console.log(opts);
-          console.log(ctx);
-        },
-      })
-      // User must provide command,
-      // otherwise, this cli will exit with non-zero
-      .commands(requireCommand())
-      // <cmd> upgrade server argument 1 2 3
-      // args = ["argument", 1, 2, 3]
+  it("default", async () => {
+    const l = console.log;
+    await Commandline.mock("@kcbb/test", ["test", "--name", "hello", "--debug", "morning", "afternoon"])
       .commands({
-        name: "upgrade",
-        values: ["upgrade", "server"],
-        // optional
-        help: { description: "" },
-        // optional
-        verify: () => new Error("verify failed"),
-        // optional
-        exec: (args, ctx) => {
-          console.log(args);
-          console.log(ctx);
+        key: "test-hello",
+        values: ["test", "hello"],
+        event: {
+          preload: () => l("test-hello command preload"),
+          load: () => l("test-hello command load"),
+          verify: () => {
+            l("test-hello command verify");
+            return undefined;
+          },
         },
+      })
+      .commands({
+        key: "test",
+        values: ["test"],
+        event: {
+          preload: () => l("test command preload"),
+          load: () => l("test command load"),
+          loaded: () => l("test command loaded"),
+          verify: () => {
+            l("test command verify");
+            return undefined;
+          },
+        },
+      })
+      .options({
+        key: "name",
+        values: ["--name", "-n"],
+        event: {
+          preload: () => l("name option preload"),
+          load: () => l("name option load"),
+          loaded: () => l("name option loaded"),
+          verify: () => {
+            l("name option verify");
+            return undefined;
+          },
+        },
+        // convert: s => s.split(","),
+      })
+      .options({
+        key: "debug",
+        values: ["--debug", "-d"],
+        event: {
+          preload: () => l("debug option preload"),
+          load: () => l("debug option load"),
+          loaded: () => l("debug option loaded"),
+          verify: () => {
+            l("debug option verify");
+            return undefined;
+          },
+        },
+      })
+      .events({
+        preload: () => l("commandline preload"),
+        loaded: () => l("commandline loaded"),
+        verify: () => {
+          l("commandline verify");
+          return undefined;
+        },
+        verifyCommand: () => {
+          l("commandline verify-command");
+          return undefined;
+        },
+        verifyOption: () => {
+          l("commandline verify-option");
+          return undefined;
+        },
+      })
+      .build(v => {
+        l(v.commands);
+        l(v.options);
+        l(v.unknown);
+        l(v.raw);
       });
   });
 });

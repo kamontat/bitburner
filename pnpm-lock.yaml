@@ -8,9 +8,7 @@ importers:
   apps/deploy:
     specifiers:
       '@kcbb-internal/vite-config': workspace:*
-      '@kcbb-libs/cache': workspace:*
       '@kcbb-libs/commandline': workspace:*
-      '@kcbb-libs/logger': workspace:*
       '@rollup/plugin-typescript': 11.0.0
       '@types/netscripts': workspace:*
       '@types/node': 18.11.18
@@ -22,9 +20,7 @@ importers:
       vite: 4.0.4
       vitest: 0.27.3
     dependencies:
-      '@kcbb-libs/cache': link:../../packages/cache
       '@kcbb-libs/commandline': link:../../packages/commandline
-      '@kcbb-libs/logger': link:../../packages/logger
     devDependencies:
       '@kcbb-internal/vite-config': link:../../packages/vite-config
       '@rollup/plugin-typescript': 11.0.0_mhocex6fqwakw35tk2klboonyu
