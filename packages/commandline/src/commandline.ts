@@ -18,6 +18,7 @@ export class Commandline<M> {
   private _mapper: OptionMapper;
   private _options: OptionData<string, unknown>[];
 
+  
   private _result: Result<Record<string, unknown>>;
 
   private constructor(private name: string, args: ArgumentType[], private context: Context) {

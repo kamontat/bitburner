@@ -1,4 +1,3 @@
-
 export class Cache {
   private static _instance: Cache;
 
@@ -18,6 +17,6 @@ export class Cache {
   }
 
   delete(key: string): boolean {
-    return this.map.delete(key)
+    return this.map.delete(key);
   }
 }
